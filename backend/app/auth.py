@@ -12,7 +12,8 @@ def get_current_user_id(authorization: str = Header(...)) -> str:
         raise HTTPException(status_code=401, detail="Missing Bearer token")
     token = authorization.split(" ", 1)[1]
     try:
-        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALG])
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALG], options={"verify_aud": False})
         return payload["sub"]
-    except Exception:
-        raise HTTPException(status_code=401, detail="Invalid token")
+    except Exception as e:
+        print(f"Token validation error: {e}")
+        raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
