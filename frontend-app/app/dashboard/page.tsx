@@ -3,6 +3,7 @@
 import AudioUploader from '@/components/AudioUploader'
 import ResumesLibrary from '@/components/ResumesLibrary'
 import PreferencesModal from '@/components/PreferencesModal'
+import QuickPreferences from '@/components/QuickPreferences'
 import { useEffect, useState, useRef } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 
@@ -52,7 +53,7 @@ export default function DashboardPage() {
               onClick={() => setPreferencesOpen(true)}
               className="px-4 py-2 text-sm bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
             >
-              Preferences
+              Advanced Settings
             </button>
             <button
               onClick={handleLogout}
@@ -67,12 +68,18 @@ export default function DashboardPage() {
       <div className="max-w-7xl mx-auto px-6 py-10">
         {/* Upload Section */}
         <section className="mb-12">
-          <h2 className="text-xl font-semibold mb-2">Upload Audio</h2>
-          <p className="text-slate-400 mb-6">
-            Upload an audio file to transcribe and generate a summary.
-          </p>
-          <div className="flex justify-center">
-            <AudioUploader onSummaryGenerated={handleSummaryGenerated} />
+          <h2 className="text-xl font-semibold mb-6">Upload Audio</h2>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Left: Audio Uploader */}
+            <div className="flex flex-col justify-center">
+              <AudioUploader onSummaryGenerated={handleSummaryGenerated} />
+            </div>
+
+            {/* Right: Quick Preferences */}
+            <div>
+              <QuickPreferences onPreferencesChange={handleSummaryGenerated} />
+            </div>
           </div>
         </section>
 

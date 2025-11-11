@@ -2,81 +2,159 @@ import os
 from typing import List, Dict, Optional
 from openai import OpenAI
 
-# System prompts by language
+# System prompts by language - ADAPTIVE STRUCTURE
 SYSTEM_PROMPTS = {
     "en": {
-        "structured": """You are an assistant that generates clear and actionable meeting summaries.
-Return Markdown with:
-## Executive Summary
-## Key Decisions
-## Action Items
-## Risks / Blockers
-## Open Questions
-""",
+        "structured": """You are an expert at analyzing and summarizing meetings. Your task is to:
+
+1. ANALYZE the meeting content and flow
+2. DETERMINE the most appropriate structure based on:
+   - Meeting type (brainstorming, decision-making, status update, planning, review, etc.)
+   - Key themes and topics discussed
+   - Natural flow of conversation
+   - What information is most important
+
+3. CREATE a summary with a DYNAMIC structure that fits the content
+
+Guidelines:
+- Choose section headings that reflect actual meeting content
+- Don't force information into predetermined categories
+- Use appropriate sections like: Overview, Context, Main Discussion Points, Decisions Made, Next Steps, Technical Details, Ideas Generated, Concerns Raised, Timeline, etc.
+- Organize information in the way that makes most sense for THIS specific meeting
+- Be flexible - some meetings need 3 sections, others need 7
+- Return well-formatted Markdown with clear headings
+
+Example structures (adapt as needed):
+- For brainstorming: Context, Ideas Generated, Top Candidates, Next Steps
+- For technical review: Overview, Technical Issues, Solutions Proposed, Implementation Plan
+- For planning: Objectives, Discussion Points, Decisions, Timeline, Responsibilities
+- For status update: Progress Summary, Completed Items, Blockers, Upcoming Work""",
         "bullet_points": """You are an assistant that generates concise meeting summaries in bullet point format.
-Return a clear, organized bullet-point summary of the meeting highlighting key points, decisions, and action items.""",
+Analyze the meeting and organize bullet points in a way that reflects the natural flow and topics discussed.
+Create sections based on actual content, not predetermined categories.""",
         "paragraph": """You are an assistant that generates meeting summaries in paragraph form.
-Write a coherent narrative summary of the meeting, covering key discussions, decisions, and outcomes.""",
+Write a coherent narrative that follows the natural flow of the meeting, organizing information logically based on the actual discussion.""",
         "action_items": """You are an assistant that extracts action items from meetings.
 Return a focused list of action items with responsible parties and deadlines if mentioned."""
     },
     "fr": {
-        "structured": """Tu es un assistant qui génère des comptes rendus de réunion clairs et actionnables.
-Retourne du Markdown avec:
-## Résumé exécutif
-## Décisions clés
-## Actions
-## Risques / Bloqueurs
-## Questions ouvertes
-""",
+        "structured": """Tu es un expert en analyse et résumé de réunions. Ta tâche est de:
+
+1. ANALYSER le contenu et le déroulement de la réunion
+2. DÉTERMINER la structure la plus appropriée basée sur:
+   - Type de réunion (brainstorming, prise de décision, point d'étape, planification, revue, etc.)
+   - Thèmes et sujets clés abordés
+   - Flux naturel de la conversation
+   - Quelles informations sont les plus importantes
+
+3. CRÉER un résumé avec une STRUCTURE DYNAMIQUE qui correspond au contenu
+
+Directives:
+- Choisis des titres de sections qui reflètent le contenu réel de la réunion
+- Ne force pas l'information dans des catégories prédéterminées
+- Utilise des sections appropriées comme: Vue d'ensemble, Contexte, Points de discussion, Décisions prises, Prochaines étapes, Détails techniques, Idées générées, Préoccupations soulevées, Chronologie, etc.
+- Organise l'information de la manière la plus logique pour CETTE réunion spécifique
+- Sois flexible - certaines réunions nécessitent 3 sections, d'autres 7
+- Retourne du Markdown bien formaté avec des titres clairs
+
+Exemples de structures (à adapter selon le besoin):
+- Pour un brainstorming: Contexte, Idées générées, Meilleures options, Prochaines étapes
+- Pour une revue technique: Aperçu, Problèmes techniques, Solutions proposées, Plan d'implémentation
+- Pour de la planification: Objectifs, Points de discussion, Décisions, Calendrier, Responsabilités
+- Pour un point d'étape: Résumé des progrès, Éléments complétés, Blocages, Travail à venir""",
         "bullet_points": """Tu es un assistant qui génère des résumés de réunion concis sous forme de points.
-Retourne un résumé clair et organisé de la réunion en points, mettant en évidence les points clés, décisions et actions.""",
+Analyse la réunion et organise les points de manière à refléter le flux naturel et les sujets abordés.
+Crée des sections basées sur le contenu réel, pas sur des catégories prédéterminées.""",
         "paragraph": """Tu es un assistant qui génère des résumés de réunion sous forme de paragraphes.
-Écris un résumé narratif cohérent de la réunion, couvrant les discussions clés, décisions et résultats.""",
-        "action_items": """Tu es un assistant qui extrait les actions à mener depuis les réunions.
+Écris un récit cohérent qui suit le flux naturel de la réunion, en organisant l'information logiquement selon la discussion réelle.""",
+        "action_items": """Tu es un assistant qui extrait les actions à mendre depuis les réunions.
 Retourne une liste ciblée des actions avec les responsables et échéances si mentionnés."""
     }
 }
 
-# User prompts by language and detail level
+# User prompts by language and detail level - ADAPTIVE
 USER_PROMPTS = {
     "en": {
-        "brief": """From the following segments (with timestamps), generate a brief summary.
-Focus on the most important information only.
+        "brief": """Analyze the following meeting transcript and create a concise summary.
 
-Segments:
+First, identify:
+- Meeting type/purpose
+- Main topics discussed
+
+Then create a brief summary with a structure that naturally fits the content.
+Focus only on the most critical information.
+
+Transcript:
 {segments}
 """,
-        "medium": """From the following segments (with timestamps), generate the requested summary.
+        "medium": """Analyze the following meeting transcript and create a well-structured summary.
+
+First, understand:
+- Meeting type (brainstorming, decision-making, planning, review, etc.)
+- Key themes and flow
+- Most important outcomes
+
+Then create a summary with sections that logically organize the content.
 Include key information, decisions, and action items with responsible parties if mentioned.
 
-Segments:
+Transcript:
 {segments}
 """,
-        "detailed": """From the following segments (with timestamps), generate a comprehensive summary.
-Include all relevant details, context, decisions, action items, discussion points, and any other important information.
+        "detailed": """Analyze the following meeting transcript and create a comprehensive, well-organized summary.
 
-Segments:
+First, thoroughly understand:
+- Meeting type and context
+- All major topics and themes
+- Natural flow and transitions
+- Critical decisions and outcomes
+
+Then create a detailed summary with a dynamic structure that best represents the meeting.
+Include all relevant details, context, decisions, action items, discussion points, concerns, ideas, and any other important information.
+Organize sections in a way that makes the content easy to navigate and understand.
+
+Transcript:
 {segments}
 """
     },
     "fr": {
-        "brief": """À partir des segments suivants (avec timestamps), génère un résumé bref.
-Concentre-toi uniquement sur les informations les plus importantes.
+        "brief": """Analyse la transcription de réunion suivante et crée un résumé concis.
 
-Segments:
+D'abord, identifie:
+- Type/objectif de la réunion
+- Principaux sujets abordés
+
+Ensuite crée un résumé bref avec une structure qui correspond naturellement au contenu.
+Concentre-toi uniquement sur les informations les plus critiques.
+
+Transcription:
 {segments}
 """,
-        "medium": """À partir des segments suivants (avec timestamps), génère le résumé demandé.
-Conserve les infos clés, décisions, et actions avec responsables si mentionnés.
+        "medium": """Analyse la transcription de réunion suivante et crée un résumé bien structuré.
 
-Segments:
+D'abord, comprends:
+- Type de réunion (brainstorming, prise de décision, planification, revue, etc.)
+- Thèmes clés et déroulement
+- Résultats les plus importants
+
+Ensuite crée un résumé avec des sections qui organisent logiquement le contenu.
+Inclus les infos clés, décisions, et actions avec responsables si mentionnés.
+
+Transcription:
 {segments}
 """,
-        "detailed": """À partir des segments suivants (avec timestamps), génère un résumé complet.
-Inclus tous les détails pertinents, contexte, décisions, actions, points de discussion et toute autre information importante.
+        "detailed": """Analyse la transcription de réunion suivante et crée un résumé complet et bien organisé.
 
-Segments:
+D'abord, comprends en profondeur:
+- Type et contexte de la réunion
+- Tous les sujets et thèmes majeurs
+- Flux naturel et transitions
+- Décisions et résultats critiques
+
+Ensuite crée un résumé détaillé avec une structure dynamique qui représente au mieux la réunion.
+Inclus tous les détails pertinents, contexte, décisions, actions, points de discussion, préoccupations, idées, et toute autre information importante.
+Organise les sections de manière à rendre le contenu facile à naviguer et comprendre.
+
+Transcription:
 {segments}
 """
     }
@@ -141,24 +219,44 @@ def summarize_chunk(client: OpenAI, chunk: str, system_prompt: str, user_prompt_
 
 
 def combine_summaries(client: OpenAI, summaries: List[str], system_prompt: str, language: str) -> str:
-    """Combine multiple chunk summaries into one coherent summary."""
+    """Combine multiple chunk summaries into one coherent summary with adaptive structure."""
     combine_prompt = {
         "en": """You are reviewing multiple partial summaries of a long meeting. Your task is to combine them into one comprehensive, coherent summary.
 
-Merge the information, remove duplicates, and organize everything logically. Keep all important details, decisions, and action items.
+IMPORTANT: Analyze the content of all partial summaries to:
+1. Identify the overall meeting type and themes
+2. Determine the best structure for the complete summary
+3. Create an ADAPTIVE structure that fits the actual content (not a fixed template)
+
+Then:
+- Merge the information intelligently
+- Remove duplicates and redundancies
+- Organize everything using section headings that reflect the actual topics and flow
+- Keep all important details, decisions, and action items
+- Use a structure that makes sense for THIS specific meeting
 
 Partial summaries:
 {summaries}
 
-Provide a complete, unified summary that preserves all important information.""",
+Provide a complete, unified summary with a dynamic structure that best represents the full meeting.""",
         "fr": """Tu examines plusieurs résumés partiels d'une longue réunion. Ta tâche est de les combiner en un seul résumé complet et cohérent.
 
-Fusionne les informations, élimine les doublons et organise tout de manière logique. Conserve tous les détails importants, décisions et actions.
+IMPORTANT: Analyse le contenu de tous les résumés partiels pour:
+1. Identifier le type global de réunion et les thèmes
+2. Déterminer la meilleure structure pour le résumé complet
+3. Créer une structure ADAPTATIVE qui correspond au contenu réel (pas un modèle fixe)
+
+Ensuite:
+- Fusionne les informations intelligemment
+- Élimine les doublons et redondances
+- Organise tout en utilisant des titres de sections qui reflètent les sujets et le flux réels
+- Conserve tous les détails importants, décisions et actions
+- Utilise une structure qui a du sens pour CETTE réunion spécifique
 
 Résumés partiels:
 {summaries}
 
-Fournis un résumé complet et unifié qui préserve toutes les informations importantes."""
+Fournis un résumé complet et unifié avec une structure dynamique qui représente au mieux la réunion complète."""
     }
 
     lang = language if language in combine_prompt else "en"

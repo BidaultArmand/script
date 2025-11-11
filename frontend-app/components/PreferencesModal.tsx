@@ -3,11 +3,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
-interface Preferences {
-  default_format: string;
-  default_language: string;
-  default_detail_level: string;
-  auto_generate_summary: boolean;
+interface AdvancedPreferences {
   include_timestamps: boolean;
   include_action_items: boolean;
   include_decisions: boolean;
@@ -24,11 +20,7 @@ export default function PreferencesModal({
   onClose,
   onSave,
 }: PreferencesModalProps) {
-  const [preferences, setPreferences] = useState<Preferences>({
-    default_format: "structured",
-    default_language: "en",
-    default_detail_level: "medium",
-    auto_generate_summary: true,
+  const [preferences, setPreferences] = useState<AdvancedPreferences>({
     include_timestamps: true,
     include_action_items: true,
     include_decisions: true,
@@ -61,7 +53,11 @@ export default function PreferencesModal({
 
       if (response.ok) {
         const data = await response.json();
-        setPreferences(data);
+        setPreferences({
+          include_timestamps: data.include_timestamps ?? true,
+          include_action_items: data.include_action_items ?? true,
+          include_decisions: data.include_decisions ?? true,
+        });
       }
     } catch (error) {
       console.error("Error loading preferences:", error);
@@ -83,14 +79,28 @@ export default function PreferencesModal({
         return;
       }
 
+      // Get current preferences first to preserve other settings
       const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+      const getCurrentPrefs = await fetch(`${apiBaseUrl}/preferences`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      let currentPrefs = {};
+      if (getCurrentPrefs.ok) {
+        currentPrefs = await getCurrentPrefs.json();
+      }
+
+      // Update only advanced settings
       const response = await fetch(`${apiBaseUrl}/preferences`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(preferences),
+        body: JSON.stringify({
+          ...currentPrefs,
+          ...preferences,
+        }),
       });
 
       if (response.ok) {
@@ -114,9 +124,9 @@ export default function PreferencesModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-slate-900 rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+      <div className="bg-slate-900 rounded-lg p-6 max-w-lg w-full mx-4">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-white">Summary Preferences</h2>
+          <h2 className="text-xl font-bold text-white">Advanced Settings</h2>
           <button
             onClick={onClose}
             className="text-slate-400 hover:text-white text-2xl"
@@ -125,84 +135,14 @@ export default function PreferencesModal({
           </button>
         </div>
 
-        <div className="space-y-6">
-          {/* Format */}
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
-              Summary Format
-            </label>
-            <select
-              value={preferences.default_format}
-              onChange={(e) =>
-                setPreferences({ ...preferences, default_format: e.target.value })
-              }
-              className="w-full bg-slate-800 text-white border border-slate-700 rounded px-3 py-2 focus:outline-none focus:border-blue-500"
-            >
-              <option value="structured">Structured (with sections)</option>
-              <option value="bullet_points">Bullet Points</option>
-              <option value="paragraph">Paragraph</option>
-              <option value="action_items">Action Items Only</option>
-            </select>
-          </div>
-
-          {/* Language */}
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
-              Summary Language
-            </label>
-            <select
-              value={preferences.default_language}
-              onChange={(e) =>
-                setPreferences({ ...preferences, default_language: e.target.value })
-              }
-              className="w-full bg-slate-800 text-white border border-slate-700 rounded px-3 py-2 focus:outline-none focus:border-blue-500"
-            >
-              <option value="en">English</option>
-              <option value="fr">Français</option>
-            </select>
-          </div>
-
-          {/* Detail Level */}
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
-              Detail Level
-            </label>
-            <select
-              value={preferences.default_detail_level}
-              onChange={(e) =>
-                setPreferences({
-                  ...preferences,
-                  default_detail_level: e.target.value,
-                })
-              }
-              className="w-full bg-slate-800 text-white border border-slate-700 rounded px-3 py-2 focus:outline-none focus:border-blue-500"
-            >
-              <option value="brief">Brief</option>
-              <option value="medium">Medium</option>
-              <option value="detailed">Detailed</option>
-            </select>
-          </div>
+        <div className="space-y-4">
+          <p className="text-sm text-slate-400 mb-4">
+            Configure advanced options for summary generation
+          </p>
 
           {/* Toggles */}
-          <div className="space-y-3">
-            <label className="flex items-center space-x-3">
-              <input
-                type="checkbox"
-                checked={preferences.auto_generate_summary}
-                onChange={(e) =>
-                  setPreferences({
-                    ...preferences,
-                    auto_generate_summary: e.target.checked,
-                  })
-                }
-                className="w-4 h-4 bg-slate-800 border-slate-700 rounded"
-              />
-              <span className="text-sm text-slate-300">
-                Auto-generate summary after transcription
-              </span>
-            </label>
-
-            <label className="flex items-center space-x-3">
+          <div className="space-y-4">
+            <label className="flex items-start space-x-3 cursor-pointer">
               <input
                 type="checkbox"
                 checked={preferences.include_timestamps}
@@ -212,12 +152,17 @@ export default function PreferencesModal({
                     include_timestamps: e.target.checked,
                   })
                 }
-                className="w-4 h-4 bg-slate-800 border-slate-700 rounded"
+                className="w-4 h-4 mt-1 bg-slate-800 border-slate-700 rounded"
               />
-              <span className="text-sm text-slate-300">Include timestamps</span>
+              <div>
+                <span className="text-sm font-medium text-slate-300">Include timestamps</span>
+                <p className="text-xs text-slate-500 mt-1">
+                  Show time markers in the summary for easy reference
+                </p>
+              </div>
             </label>
 
-            <label className="flex items-center space-x-3">
+            <label className="flex items-start space-x-3 cursor-pointer">
               <input
                 type="checkbox"
                 checked={preferences.include_action_items}
@@ -227,12 +172,17 @@ export default function PreferencesModal({
                     include_action_items: e.target.checked,
                   })
                 }
-                className="w-4 h-4 bg-slate-800 border-slate-700 rounded"
+                className="w-4 h-4 mt-1 bg-slate-800 border-slate-700 rounded"
               />
-              <span className="text-sm text-slate-300">Extract action items</span>
+              <div>
+                <span className="text-sm font-medium text-slate-300">Extract action items</span>
+                <p className="text-xs text-slate-500 mt-1">
+                  Automatically identify and highlight action items
+                </p>
+              </div>
             </label>
 
-            <label className="flex items-center space-x-3">
+            <label className="flex items-start space-x-3 cursor-pointer">
               <input
                 type="checkbox"
                 checked={preferences.include_decisions}
@@ -242,9 +192,14 @@ export default function PreferencesModal({
                     include_decisions: e.target.checked,
                   })
                 }
-                className="w-4 h-4 bg-slate-800 border-slate-700 rounded"
+                className="w-4 h-4 mt-1 bg-slate-800 border-slate-700 rounded"
               />
-              <span className="text-sm text-slate-300">Extract key decisions</span>
+              <div>
+                <span className="text-sm font-medium text-slate-300">Extract key decisions</span>
+                <p className="text-xs text-slate-500 mt-1">
+                  Highlight important decisions made during the meeting
+                </p>
+              </div>
             </label>
           </div>
 
@@ -266,13 +221,13 @@ export default function PreferencesModal({
             <button
               onClick={handleSave}
               disabled={loading}
-              className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-700 text-white font-medium py-2 px-4 rounded transition-colors"
+              className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-700 text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm"
             >
-              {loading ? "Saving..." : "Save Preferences"}
+              {loading ? "Saving..." : "Save Settings"}
             </button>
             <button
               onClick={onClose}
-              className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-medium py-2 px-4 rounded transition-colors"
+              className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm"
             >
               Cancel
             </button>
