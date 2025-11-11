@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import SummaryRefinementChat from "./SummaryRefinementChat";
 
 interface Summary {
   id: string;
@@ -19,6 +20,7 @@ export default function ResumesLibrary() {
   const [summaries, setSummaries] = useState<Summary[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedSummary, setSelectedSummary] = useState<Summary | null>(null);
+  const [showChat, setShowChat] = useState(false);
   const [message, setMessage] = useState("");
 
   useEffect(() => {
@@ -154,7 +156,7 @@ export default function ResumesLibrary() {
       {/* Summary Detail Modal */}
       {selectedSummary && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-slate-900 rounded-lg p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-slate-900 rounded-lg p-6 max-w-7xl w-full max-h-[90vh] flex flex-col">
             <div className="flex justify-between items-start mb-4">
               <div>
                 <h2 className="text-2xl font-bold text-white mb-2">
@@ -171,40 +173,81 @@ export default function ResumesLibrary() {
                 </div>
               </div>
               <button
-                onClick={() => setSelectedSummary(null)}
+                onClick={() => {
+                  setSelectedSummary(null);
+                  setShowChat(false);
+                }}
                 className="text-slate-400 hover:text-white text-2xl"
               >
                 ×
               </button>
             </div>
 
-            <div className="bg-slate-800 rounded-lg p-6 prose prose-invert max-w-none">
-              <div
-                className="text-slate-200 whitespace-pre-wrap"
-                dangerouslySetInnerHTML={{
-                  __html: selectedSummary.summary_text
-                    .replace(/\n/g, "<br/>")
-                    .replace(/## /g, '<h2 class="text-xl font-bold mt-4 mb-2">')
-                    .replace(/<\/h2>/g, "</h2>")
-                    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>"),
-                }}
-              />
+            <div className="flex-1 overflow-hidden flex gap-4">
+              {/* Summary Content */}
+              <div className={`${showChat ? "w-1/2" : "w-full"} flex flex-col`}>
+                <div className="flex-1 overflow-y-auto bg-slate-800 rounded-lg p-6 prose prose-invert max-w-none">
+                  <div
+                    className="text-slate-200 whitespace-pre-wrap"
+                    dangerouslySetInnerHTML={{
+                      __html: selectedSummary.summary_text
+                        .replace(/\n/g, "<br/>")
+                        .replace(/## /g, '<h2 class="text-xl font-bold mt-4 mb-2">')
+                        .replace(/<\/h2>/g, "</h2>")
+                        .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>"),
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Chat Interface */}
+              {showChat && (
+                <div className="w-1/2">
+                  <SummaryRefinementChat
+                    summaryId={selectedSummary.id}
+                    currentSummary={selectedSummary.summary_text}
+                    onSummaryUpdated={(newSummary) => {
+                      setSelectedSummary({
+                        ...selectedSummary,
+                        summary_text: newSummary,
+                      });
+                      // Update in the list too
+                      setSummaries(
+                        summaries.map((s) =>
+                          s.id === selectedSummary.id
+                            ? { ...s, summary_text: newSummary }
+                            : s
+                        )
+                      );
+                    }}
+                  />
+                </div>
+              )}
             </div>
 
             <div className="mt-6 flex gap-3">
+              <button
+                onClick={() => setShowChat(!showChat)}
+                className="bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+              >
+                {showChat ? "Hide Chat" : "Refine with AI"}
+              </button>
               <button
                 onClick={() => {
                   navigator.clipboard.writeText(selectedSummary.summary_text);
                   setMessage("Copied to clipboard!");
                   setTimeout(() => setMessage(""), 2000);
                 }}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded transition-colors"
+                className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
               >
                 Copy to Clipboard
               </button>
               <button
-                onClick={() => setSelectedSummary(null)}
-                className="bg-slate-700 hover:bg-slate-600 text-white font-medium py-2 px-4 rounded transition-colors"
+                onClick={() => {
+                  setSelectedSummary(null);
+                  setShowChat(false);
+                }}
+                className="bg-slate-700 hover:bg-slate-600 text-white font-medium py-2 px-4 rounded-lg transition-colors"
               >
                 Close
               </button>
