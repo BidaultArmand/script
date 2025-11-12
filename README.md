@@ -1,1 +1,6 @@
 # script
+
+Project_URL=https://qgagnswfuwiwfedvrvpx.supabase.co
+
+API_KEY_SUPABASE=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFnYWduc3dmdXdpd2ZlZHZydnB4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3Njc4ODQsImV4cCI6MjA3ODM0Mzg4NH0.9pWQ9WRWoPteqT3H7Tg2R9zd6X_ibgX7ITTiYlAL_V8
+

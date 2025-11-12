@@ -52,35 +52,35 @@ export default function AuthPage() {
   }
 
   return (
-    <main className="flex flex-col items-center justify-center min-h-screen bg-slate-950 text-white">
+    <main className="flex flex-col items-center justify-center min-h-screen bg-white text-black">
       <h1 className="text-2xl mb-4 font-semibold">Connexion</h1>
       <form className="flex flex-col gap-3 w-64">
         <input
-          className="p-2 rounded bg-slate-800 border border-slate-600"
+          className="p-2 rounded bg-white border border-gray-300 text-black"
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           type="email"
         />
         <input
-          className="p-2 rounded bg-slate-800 border border-slate-600"
+          className="p-2 rounded bg-white border border-gray-300 text-black"
           placeholder="Mot de passe"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           type="password"
         />
-        {error && <p className="text-red-400 text-sm">{error}</p>}
+        {error && <p className="text-red-600 text-sm">{error}</p>}
         <button
           onClick={handleLogin}
           disabled={loading}
-          className="bg-blue-600 hover:bg-blue-700 p-2 rounded font-semibold"
+          className="bg-black hover:bg-gray-800 p-2 rounded font-semibold text-white"
         >
           {loading ? 'Connexion...' : 'Se connecter'}
         </button>
         <button
           onClick={handleSignup}
           disabled={loading}
-          className="bg-gray-700 hover:bg-gray-800 p-2 rounded font-semibold"
+          className="bg-black hover:bg-gray-800 p-2 rounded font-semibold text-white"
         >
           {loading ? 'Inscription...' : "S'inscrire"}
         </button>

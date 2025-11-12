@@ -124,19 +124,19 @@ export default function PreferencesModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-slate-900 rounded-lg p-6 max-w-lg w-full mx-4">
+      <div className="bg-white rounded-lg p-6 max-w-lg w-full mx-4">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-bold text-white">Advanced Settings</h2>
+          <h2 className="text-xl font-bold text-black">Advanced Settings</h2>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-white text-2xl"
+            className="text-gray-600 hover:text-black text-2xl"
           >
             ×
           </button>
         </div>
 
         <div className="space-y-4">
-          <p className="text-sm text-slate-400 mb-4">
+          <p className="text-sm text-gray-600 mb-4">
             Configure advanced options for summary generation
           </p>
 
@@ -152,11 +152,11 @@ export default function PreferencesModal({
                     include_timestamps: e.target.checked,
                   })
                 }
-                className="w-4 h-4 mt-1 bg-slate-800 border-slate-700 rounded"
+                className="w-4 h-4 mt-1 bg-white border-gray-300 rounded"
               />
               <div>
-                <span className="text-sm font-medium text-slate-300">Include timestamps</span>
-                <p className="text-xs text-slate-500 mt-1">
+                <span className="text-sm font-medium text-gray-800">Include timestamps</span>
+                <p className="text-xs text-gray-600 mt-1">
                   Show time markers in the summary for easy reference
                 </p>
               </div>
@@ -172,11 +172,11 @@ export default function PreferencesModal({
                     include_action_items: e.target.checked,
                   })
                 }
-                className="w-4 h-4 mt-1 bg-slate-800 border-slate-700 rounded"
+                className="w-4 h-4 mt-1 bg-white border-gray-300 rounded"
               />
               <div>
-                <span className="text-sm font-medium text-slate-300">Extract action items</span>
-                <p className="text-xs text-slate-500 mt-1">
+                <span className="text-sm font-medium text-gray-800">Extract action items</span>
+                <p className="text-xs text-gray-600 mt-1">
                   Automatically identify and highlight action items
                 </p>
               </div>
@@ -192,11 +192,11 @@ export default function PreferencesModal({
                     include_decisions: e.target.checked,
                   })
                 }
-                className="w-4 h-4 mt-1 bg-slate-800 border-slate-700 rounded"
+                className="w-4 h-4 mt-1 bg-white border-gray-300 rounded"
               />
               <div>
-                <span className="text-sm font-medium text-slate-300">Extract key decisions</span>
-                <p className="text-xs text-slate-500 mt-1">
+                <span className="text-sm font-medium text-gray-800">Extract key decisions</span>
+                <p className="text-xs text-gray-600 mt-1">
                   Highlight important decisions made during the meeting
                 </p>
               </div>
@@ -208,8 +208,8 @@ export default function PreferencesModal({
             <div
               className={`p-3 rounded ${
                 message.includes("success")
-                  ? "bg-green-900/50 text-green-200"
-                  : "bg-red-900/50 text-red-200"
+                  ? "bg-green-100 text-green-800"
+                  : "bg-red-100 text-red-800"
               }`}
             >
               {message}
@@ -221,13 +221,13 @@ export default function PreferencesModal({
             <button
               onClick={handleSave}
               disabled={loading}
-              className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-700 text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm"
+              className="flex-1 bg-black hover:bg-gray-800 disabled:bg-gray-300 text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm"
             >
               {loading ? "Saving..." : "Save Settings"}
             </button>
             <button
               onClick={onClose}
-              className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm"
+              className="flex-1 bg-gray-200 hover:bg-gray-300 text-black font-medium py-2 px-4 rounded-lg transition-colors text-sm"
             >
               Cancel
             </button>

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import SummaryRefinementChat from "./SummaryRefinementChat";
+import { Progress } from "@/components/ui/progress";
 
 interface Summary {
   id: string;
@@ -16,7 +17,12 @@ interface Summary {
   generation_time_seconds: number;
 }
 
-export default function ResumesLibrary() {
+interface ResumesLibraryProps {
+  isProcessing?: boolean;
+  processingProgress?: number;
+}
+
+export default function ResumesLibrary({ isProcessing = false, processingProgress = 0 }: ResumesLibraryProps) {
   const [summaries, setSummaries] = useState<Summary[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedSummary, setSelectedSummary] = useState<Summary | null>(null);
@@ -82,7 +88,7 @@ export default function ResumesLibrary() {
   if (loading) {
     return (
       <div className="text-center py-8">
-        <div className="text-slate-400">Loading summaries...</div>
+        <div className="text-gray-600">Loading summaries...</div>
       </div>
     );
   }
@@ -90,7 +96,7 @@ export default function ResumesLibrary() {
   if (message) {
     return (
       <div className="text-center py-8">
-        <div className="text-red-400">{message}</div>
+        <div className="text-red-600">{message}</div>
       </div>
     );
   }
@@ -98,8 +104,8 @@ export default function ResumesLibrary() {
   if (summaries.length === 0) {
     return (
       <div className="text-center py-12">
-        <div className="text-slate-400 text-lg mb-2">No summaries yet</div>
-        <div className="text-slate-500 text-sm">
+        <div className="text-gray-600 text-lg mb-2">No summaries yet</div>
+        <div className="text-gray-500 text-sm">
           Upload an audio file and generate a summary to see it here
         </div>
       </div>
@@ -109,43 +115,61 @@ export default function ResumesLibrary() {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-white">Your Summaries</h2>
+        <h2 className="text-2xl font-bold text-black">Your Summaries</h2>
         <button
           onClick={loadSummaries}
-          className="text-sm text-blue-400 hover:text-blue-300"
+          className="text-sm text-black hover:text-gray-700 font-medium"
         >
           Refresh
         </button>
       </div>
+
+      {/* Processing Progress Bar */}
+      {isProcessing && (
+        <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium text-gray-700">
+                {processingProgress < 30 && "Uploading audio..."}
+                {processingProgress >= 30 && processingProgress < 70 && "Transcribing audio..."}
+                {processingProgress >= 70 && processingProgress < 100 && "Generating summary..."}
+                {processingProgress === 100 && "Complete!"}
+              </p>
+              <span className="text-sm text-gray-500">{Math.round(processingProgress)}%</span>
+            </div>
+            <Progress value={processingProgress} className="w-full" />
+          </div>
+        </div>
+      )}
 
       {/* Summary List */}
       <div className="grid gap-4">
         {summaries.map((summary) => (
           <div
             key={summary.id}
-            className="bg-slate-800 rounded-lg p-4 hover:bg-slate-750 cursor-pointer transition-colors border border-slate-700"
+            className="bg-white rounded-lg p-4 hover:bg-gray-50 cursor-pointer transition-colors border border-gray-200"
             onClick={() => setSelectedSummary(summary)}
           >
             <div className="flex justify-between items-start mb-2">
-              <h3 className="text-lg font-semibold text-white">{summary.title}</h3>
-              <span className="text-xs text-slate-400 bg-slate-700 px-2 py-1 rounded">
+              <h3 className="text-lg font-semibold text-black">{summary.title}</h3>
+              <span className="text-xs text-gray-700 bg-gray-100 px-2 py-1 rounded">
                 {getFormatLabel(summary.format)}
               </span>
             </div>
-            <div className="text-sm text-slate-400 mb-2">
+            <div className="text-sm text-gray-600 mb-2">
               {formatDate(summary.created_at)}
             </div>
-            <div className="text-sm text-slate-300 line-clamp-2">
+            <div className="text-sm text-gray-700 line-clamp-2">
               {summary.summary_text.substring(0, 200)}...
             </div>
-            <div className="flex gap-2 mt-3 text-xs text-slate-500">
-              <span className="bg-slate-700 px-2 py-1 rounded">
+            <div className="flex gap-2 mt-3 text-xs text-gray-600">
+              <span className="bg-gray-100 px-2 py-1 rounded">
                 {summary.language.toUpperCase()}
               </span>
-              <span className="bg-slate-700 px-2 py-1 rounded">
+              <span className="bg-gray-100 px-2 py-1 rounded">
                 {summary.detail_level}
               </span>
-              <span className="bg-slate-700 px-2 py-1 rounded">
+              <span className="bg-gray-100 px-2 py-1 rounded">
                 {summary.generation_time_seconds.toFixed(1)}s
               </span>
             </div>
@@ -156,13 +180,13 @@ export default function ResumesLibrary() {
       {/* Summary Detail Modal */}
       {selectedSummary && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-slate-900 rounded-lg p-6 max-w-7xl w-full max-h-[90vh] flex flex-col">
+          <div className="bg-white rounded-lg p-6 max-w-7xl w-full max-h-[90vh] flex flex-col">
             <div className="flex justify-between items-start mb-4">
               <div>
-                <h2 className="text-2xl font-bold text-white mb-2">
+                <h2 className="text-2xl font-bold text-black mb-2">
                   {selectedSummary.title}
                 </h2>
-                <div className="flex gap-2 text-xs text-slate-400">
+                <div className="flex gap-2 text-xs text-gray-600">
                   <span>{formatDate(selectedSummary.created_at)}</span>
                   <span>•</span>
                   <span>{getFormatLabel(selectedSummary.format)}</span>
@@ -177,7 +201,7 @@ export default function ResumesLibrary() {
                   setSelectedSummary(null);
                   setShowChat(false);
                 }}
-                className="text-slate-400 hover:text-white text-2xl"
+                className="text-gray-600 hover:text-black text-2xl"
               >
                 ×
               </button>
@@ -186,9 +210,9 @@ export default function ResumesLibrary() {
             <div className="flex-1 overflow-hidden flex gap-4">
               {/* Summary Content */}
               <div className={`${showChat ? "w-1/2" : "w-full"} flex flex-col`}>
-                <div className="flex-1 overflow-y-auto bg-slate-800 rounded-lg p-6 prose prose-invert max-w-none">
+                <div className="flex-1 overflow-y-auto bg-gray-50 rounded-lg p-6 prose max-w-none">
                   <div
-                    className="text-slate-200 whitespace-pre-wrap"
+                    className="text-gray-800 whitespace-pre-wrap"
                     dangerouslySetInnerHTML={{
                       __html: selectedSummary.summary_text
                         .replace(/\n/g, "<br/>")
@@ -228,7 +252,7 @@ export default function ResumesLibrary() {
             <div className="mt-6 flex gap-3">
               <button
                 onClick={() => setShowChat(!showChat)}
-                className="bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                className="bg-black hover:bg-gray-800 text-white font-medium py-2 px-4 rounded-lg transition-colors"
               >
                 {showChat ? "Hide Chat" : "Refine with AI"}
               </button>
@@ -238,7 +262,7 @@ export default function ResumesLibrary() {
                   setMessage("Copied to clipboard!");
                   setTimeout(() => setMessage(""), 2000);
                 }}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                className="bg-black hover:bg-gray-800 text-white font-medium py-2 px-4 rounded-lg transition-colors"
               >
                 Copy to Clipboard
               </button>
@@ -247,14 +271,14 @@ export default function ResumesLibrary() {
                   setSelectedSummary(null);
                   setShowChat(false);
                 }}
-                className="bg-slate-700 hover:bg-slate-600 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                className="bg-gray-200 hover:bg-gray-300 text-black font-medium py-2 px-4 rounded-lg transition-colors"
               >
                 Close
               </button>
             </div>
 
             {message && (
-              <div className="mt-4 p-3 bg-green-900/50 text-green-200 rounded">
+              <div className="mt-4 p-3 bg-green-100 text-green-800 rounded">
                 {message}
               </div>
             )}

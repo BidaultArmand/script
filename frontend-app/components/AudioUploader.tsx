@@ -11,10 +11,12 @@ type TranscribeResponse = {
 }
 
 interface AudioUploaderProps {
-  onSummaryGenerated?: () => void
+  onProcessingStart?: () => void
+  onProcessingProgress?: (progress: number) => void
+  onProcessingComplete?: () => void
 }
 
-export default function AudioUploader({ onSummaryGenerated }: AudioUploaderProps) {
+export default function AudioUploader({ onProcessingStart, onProcessingProgress, onProcessingComplete }: AudioUploaderProps) {
   const [file, setFile] = useState<File | null>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -26,7 +28,7 @@ export default function AudioUploader({ onSummaryGenerated }: AudioUploaderProps
     if (!f) return
     // sécurité simple : types audio uniquement
     if (!f.type.startsWith('audio/')) {
-      setMessage('Veuillez sélectionner un fichier audio.')
+      setMessage("Veuillez sélectionner un fichier audio.")
       return
     }
     setMessage(null)
@@ -61,7 +63,8 @@ export default function AudioUploader({ onSummaryGenerated }: AudioUploaderProps
   const generateSummary = async (meetingId: string, token: string) => {
     try {
       setGeneratingSummary(true)
-      setMessage('Génération du résumé...')
+      setMessage("Génération du résumé...")
+      onProcessingProgress?.(70) // 70% after transcription
 
       const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL
 
@@ -73,9 +76,9 @@ export default function AudioUploader({ onSummaryGenerated }: AudioUploaderProps
       })
 
       let preferences = {
-        default_format: 'structured',
-        default_language: 'en',
-        default_detail_level: 'medium',
+        default_format: "structured",
+        default_language: "en",
+        default_detail_level: "medium",
         auto_generate_summary: true,
         include_timestamps: true,
       }
@@ -84,9 +87,12 @@ export default function AudioUploader({ onSummaryGenerated }: AudioUploaderProps
         preferences = await prefsRes.json()
       }
 
+      onProcessingProgress?.(80) // 80% preferences loaded
+
       // Only generate if auto_generate_summary is enabled
       if (!preferences.auto_generate_summary) {
-        setMessage('Transcription terminée ✅')
+        setMessage("Transcription terminée ✅")
+        onProcessingComplete?.()
         return
       }
 
@@ -107,14 +113,17 @@ export default function AudioUploader({ onSummaryGenerated }: AudioUploaderProps
       })
 
       if (summaryRes.ok) {
-        setMessage('Transcription et résumé terminés ✅')
-        onSummaryGenerated?.()
+        setMessage("Transcription et résumé terminés ✅")
+        onProcessingProgress?.(100)
+        onProcessingComplete?.()
       } else {
-        setMessage('Transcription terminée ✅ (erreur lors de la génération du résumé)')
+        setMessage("Transcription terminée ✅ (erreur lors de la génération du résumé)")
+        onProcessingComplete?.()
       }
     } catch (err) {
-      console.error('Error generating summary:', err)
-      setMessage('Transcription terminée ✅ (erreur lors de la génération du résumé)')
+      console.error("Error generating summary:", err)
+      setMessage("Transcription terminée ✅ (erreur lors de la génération du résumé)")
+      onProcessingComplete?.()
     } finally {
       setGeneratingSummary(false)
     }
@@ -123,37 +132,44 @@ export default function AudioUploader({ onSummaryGenerated }: AudioUploaderProps
   const handleTranscribe = async () => {
     try {
       if (!file) {
-        setMessage('Ajoutez un audio avant de lancer la transcription.')
+        setMessage("Ajoutez un audio avant de lancer la transcription.")
         return
       }
-      setUploading(true)
-      setMessage('Récupération de la session…')
 
-      // 🔑 Récupère le token Supabase pour authentifier l’appel backend
+      // Start processing
+      onProcessingStart?.()
+      setUploading(true)
+      setMessage("Récupération de la session…")
+      onProcessingProgress?.(10) // 10% session check
+
+      // 🔑 Récupère le token Supabase pour authentifier l'appel backend
       const { data: { session } } = await supabase.auth.getSession()
       const token = session?.access_token
       if (!token) {
         setUploading(false)
-        setMessage('Vous n’êtes pas connecté.')
+        setMessage("Vous n'êtes pas connecté.")
+        onProcessingComplete?.()
         return
       }
 
       const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL
       if (!apiBase) {
         setUploading(false)
-        setMessage('NEXT_PUBLIC_API_BASE_URL est manquant.')
+        setMessage("NEXT_PUBLIC_API_BASE_URL est manquant.")
+        onProcessingComplete?.()
         return
       }
 
       const form = new FormData()
       form.append('file', file)
 
-      setMessage('Envoi au serveur…')
+      setMessage("Envoi au serveur…")
+      onProcessingProgress?.(20) // 20% uploading
 
       const res = await fetch(`${apiBase}/transcribe`, {
         method: 'POST',
         headers: {
-          // ⚠️ indispensable pour que FastAPI retrouve l’utilisateur
+          // ⚠️ indispensable pour que FastAPI retrouve l'utilisateur
           Authorization: `Bearer ${token}`,
         },
         body: form,
@@ -164,28 +180,34 @@ export default function AudioUploader({ onSummaryGenerated }: AudioUploaderProps
         throw new Error(errText || `Erreur HTTP ${res.status}`)
       }
 
+      onProcessingProgress?.(60) // 60% transcription complete
       const data: TranscribeResponse = await res.json()
-      setMessage(`Transcription terminée ✅`)
+      setMessage("Transcription terminée ✅")
       setUploading(false)
 
       // Generate summary automatically
       await generateSummary(data.meeting_id, token)
     } catch (err: any) {
       console.error(err)
-      setMessage(`Erreur: ${err?.message || 'Impossible de lancer la transcription'}`)
+      setMessage(`Erreur: ${err?.message || "Impossible de lancer la transcription"}`)
       setUploading(false)
+      onProcessingComplete?.()
     }
   }
 
   return (
-    <div className="max-w-xl w-full space-y-4">
+    <div className="space-y-4 flex flex-col h-full">
+      <div className="flex justify-between items-center mb-2">
+        <h3 className="text-lg font-semibold text-black">Audio Upload</h3>
+      </div>
+
       <div
         onDrop={onDrop}
         onDragOver={onDragOver}
         onDragLeave={onDragLeave}
         className={[
-          'rounded-2xl border-2 border-dashed p-8 text-center transition',
-          isDragging ? 'border-indigo-400 bg-slate-800/50' : 'border-slate-700 bg-slate-800/30'
+          'rounded-xl border-2 border-dashed p-8 text-center transition flex-1 flex flex-col justify-center',
+          isDragging ? 'border-black bg-white' : 'border-gray-300 bg-white'
         ].join(' ')}
       >
         <input
@@ -195,20 +217,20 @@ export default function AudioUploader({ onSummaryGenerated }: AudioUploaderProps
           className="hidden"
           onChange={handleFileChange}
         />
-        <p className="text-sm text-slate-300 mb-3">
+        <p className="text-sm text-gray-700 mb-3">
           Déposez votre fichier audio ici
         </p>
         <button
           onClick={handleBrowse}
-          className="px-3 py-2 rounded-xl bg-slate-100 text-slate-900 text-sm hover:opacity-90"
+          className="px-3 py-2 rounded-xl bg-black text-white text-sm hover:bg-gray-800"
         >
           Parcourir…
         </button>
 
         {file && (
-          <div className="mt-4 text-slate-200 text-sm">
+          <div className="mt-4 text-gray-800 text-sm">
             Fichier sélectionné : <span className="font-medium">{file.name}</span>{' '}
-            <span className="text-slate-400">({(file.size/1024/1024).toFixed(2)} Mo)</span>
+            <span className="text-gray-600">({(file.size/1024/1024).toFixed(2)} Mo)</span>
           </div>
         )}
       </div>
@@ -218,10 +240,10 @@ export default function AudioUploader({ onSummaryGenerated }: AudioUploaderProps
           onClick={handleTranscribe}
           disabled={!file || uploading || generatingSummary}
           className={[
-            'px-4 py-2 rounded-xl text-sm font-medium transition',
+            'flex-1 px-4 py-2 rounded-xl text-sm font-medium transition',
             (!file || uploading || generatingSummary)
-              ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
-              : 'bg-indigo-500 hover:bg-indigo-600 text-white'
+              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              : 'bg-black text-white hover:bg-gray-800'
           ].join(' ')}
         >
           {uploading ? 'Transcription en cours...' : generatingSummary ? 'Génération du résumé...' : 'Lancer la transcription'}
@@ -230,7 +252,7 @@ export default function AudioUploader({ onSummaryGenerated }: AudioUploaderProps
         {file && !uploading && !generatingSummary && (
           <button
             onClick={() => { setFile(null); setMessage(null) }}
-            className="px-3 py-2 rounded-xl text-sm border border-slate-600 text-slate-200 hover:bg-slate-800"
+            className="px-3 py-2 rounded-xl text-sm border border-gray-300 text-black hover:bg-gray-100"
           >
             Réinitialiser
           </button>
@@ -238,10 +260,10 @@ export default function AudioUploader({ onSummaryGenerated }: AudioUploaderProps
       </div>
 
       {message && (
-        <p className="text-sm text-slate-300">{message}</p>
+        <p className="text-sm text-gray-700">{message}</p>
       )}
 
-      <p className="text-xs text-slate-500">
+      <p className="text-xs text-gray-500">
         Formats acceptés : mp3, m4a, wav, etc. Taille max selon config serveur.
       </p>
     </div>

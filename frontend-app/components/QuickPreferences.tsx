@@ -2,6 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface QuickPreferencesProps {
   onPreferencesChange?: () => void;
@@ -12,7 +20,6 @@ export default function QuickPreferences({ onPreferencesChange }: QuickPreferenc
   const [language, setLanguage] = useState("en");
   const [detailLevel, setDetailLevel] = useState("medium");
   const [autoGenerate, setAutoGenerate] = useState(true);
-  const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
   useEffect(() => {
@@ -45,17 +52,17 @@ export default function QuickPreferences({ onPreferencesChange }: QuickPreferenc
     }
   };
 
-  const savePreferences = async () => {
-    setLoading(true);
-    setMessage("");
-
+  const savePreferences = async (updatedPrefs: Partial<{
+    default_format: string;
+    default_language: string;
+    default_detail_level: string;
+    auto_generate_summary: boolean;
+  }>) => {
     try {
       const session = await supabase.auth.getSession();
       const token = session?.data?.session?.access_token;
 
       if (!token) {
-        setMessage("Not authenticated");
-        setLoading(false);
         return;
       }
 
@@ -79,111 +86,124 @@ export default function QuickPreferences({ onPreferencesChange }: QuickPreferenc
         },
         body: JSON.stringify({
           ...currentPrefs,
-          default_format: format,
-          default_language: language,
-          default_detail_level: detailLevel,
-          auto_generate_summary: autoGenerate,
+          ...updatedPrefs,
         }),
       });
 
       if (response.ok) {
         setMessage("Saved ✓");
-        setTimeout(() => setMessage(""), 2000);
+        setTimeout(() => setMessage(""), 1500);
         onPreferencesChange?.();
-      } else {
-        setMessage("Failed to save");
       }
     } catch (error) {
       console.error("Error saving preferences:", error);
-      setMessage("Error saving");
-    } finally {
-      setLoading(false);
     }
   };
 
+  const handleFormatChange = (value: string) => {
+    setFormat(value);
+    savePreferences({ default_format: value });
+  };
+
+  const handleLanguageChange = (value: string) => {
+    setLanguage(value);
+    savePreferences({ default_language: value });
+  };
+
+  const handleDetailLevelChange = (value: string) => {
+    setDetailLevel(value);
+    savePreferences({ default_detail_level: value });
+  };
+
+  const handleAutoGenerateChange = (checked: boolean) => {
+    setAutoGenerate(checked);
+    savePreferences({ auto_generate_summary: checked });
+  };
+
   return (
-    <div className="bg-slate-800/50 rounded-xl p-6 space-y-4">
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-semibold text-white">Summary Preferences</h3>
+    <div className="space-y-4 flex flex-col h-full">
+      <div className="flex justify-between items-center mb-2">
+        <h3 className="text-base font-medium text-gray-700">Summary Preferences</h3>
         {message && (
-          <span className={`text-sm ${message.includes("✓") ? "text-green-400" : "text-red-400"}`}>
+          <span className={`text-sm ${message.includes("✓") ? "text-green-600" : "text-red-600"}`}>
             {message}
           </span>
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="space-y-4 flex-1">
         {/* Format */}
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">
-            Summary Format
-          </label>
-          <select
-            value={format}
-            onChange={(e) => setFormat(e.target.value)}
-            className="w-full bg-slate-700 text-white border border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
-          >
-            <option value="structured">Adaptive Structure</option>
-            <option value="bullet_points">Bullet Points</option>
-            <option value="paragraph">Paragraph</option>
-            <option value="action_items">Action Items Only</option>
-          </select>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="w-full justify-between text-gray-700 font-medium">
+                Summary Format
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56">
+              <DropdownMenuRadioGroup value={format} onValueChange={handleFormatChange}>
+                <DropdownMenuRadioItem value="structured">Adaptive Structure</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="bullet_points">Bullet Points</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="paragraph">Paragraph</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="action_items">Action Items Only</DropdownMenuRadioItem>
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         {/* Language */}
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">
-            Summary Language
-          </label>
-          <select
-            value={language}
-            onChange={(e) => setLanguage(e.target.value)}
-            className="w-full bg-slate-700 text-white border border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
-          >
-            <option value="en">English</option>
-            <option value="fr">Français</option>
-          </select>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="w-full justify-between text-gray-700 font-medium">
+                Summary Language
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56">
+              <DropdownMenuRadioGroup value={language} onValueChange={handleLanguageChange}>
+                <DropdownMenuRadioItem value="en">English</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="fr">Français</DropdownMenuRadioItem>
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         {/* Detail Level */}
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">
-            Detail Level
-          </label>
-          <select
-            value={detailLevel}
-            onChange={(e) => setDetailLevel(e.target.value)}
-            className="w-full bg-slate-700 text-white border border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
-          >
-            <option value="brief">Brief</option>
-            <option value="medium">Medium</option>
-            <option value="detailed">Detailed</option>
-          </select>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="w-full justify-between text-gray-700 font-medium">
+                Detail Level
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56">
+              <DropdownMenuRadioGroup value={detailLevel} onValueChange={handleDetailLevelChange}>
+                <DropdownMenuRadioItem value="brief">Brief</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="medium">Medium</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="detailed">Detailed</DropdownMenuRadioItem>
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         {/* Auto-generate */}
-        <div className="flex items-center">
+        <div className="flex items-center pt-2">
           <label className="flex items-center space-x-3 cursor-pointer">
             <input
               type="checkbox"
               checked={autoGenerate}
-              onChange={(e) => setAutoGenerate(e.target.checked)}
-              className="w-4 h-4 bg-slate-700 border-slate-600 rounded"
+              onChange={(e) => handleAutoGenerateChange(e.target.checked)}
+              className="w-4 h-4 bg-white border-gray-300 rounded"
             />
-            <span className="text-sm text-slate-300">
+            <span className="text-sm text-gray-700">
               Auto-generate summary after transcription
             </span>
           </label>
         </div>
       </div>
-
-      <button
-        onClick={savePreferences}
-        disabled={loading}
-        className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-700 text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm"
-      >
-        {loading ? "Saving..." : "Save Preferences"}
-      </button>
     </div>
   );
 }
