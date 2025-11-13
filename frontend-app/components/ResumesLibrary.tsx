@@ -28,6 +28,7 @@ export default function ResumesLibrary({ isProcessing = false, processingProgres
   const [selectedSummary, setSelectedSummary] = useState<Summary | null>(null);
   const [showChat, setShowChat] = useState(false);
   const [message, setMessage] = useState("");
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
   useEffect(() => {
     loadSummaries();
@@ -83,6 +84,42 @@ export default function ResumesLibrary({ isProcessing = false, processingProgres
       action_items: "Action Items",
     };
     return labels[format] || format;
+  };
+
+  const handleDelete = async (summaryId: string) => {
+    try {
+      const session = await supabase.auth.getSession();
+      const token = session?.data?.session?.access_token;
+
+      if (!token) {
+        setMessage("Not authenticated");
+        return;
+      }
+
+      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+      const response = await fetch(`${apiBaseUrl}/summaries/${summaryId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        // Remove from local state
+        setSummaries(summaries.filter((s) => s.id !== summaryId));
+        setMessage("Summary deleted successfully");
+        setTimeout(() => setMessage(""), 3000);
+      } else {
+        const errorText = await response.text();
+        console.error("Failed to delete summary:", errorText);
+        setMessage(`Failed to delete summary: ${response.status}`);
+      }
+    } catch (error) {
+      console.error("Error deleting summary:", error);
+      setMessage("Cannot connect to backend");
+    } finally {
+      setDeleteConfirm(null);
+    }
   };
 
   if (loading) {
@@ -147,32 +184,60 @@ export default function ResumesLibrary({ isProcessing = false, processingProgres
         {summaries.map((summary) => (
           <div
             key={summary.id}
-            className="bg-white rounded-lg p-4 hover:bg-gray-50 cursor-pointer transition-colors border border-gray-200"
-            onClick={() => setSelectedSummary(summary)}
+            className="bg-white rounded-lg p-4 hover:bg-gray-50 transition-colors border border-gray-200 relative"
           >
-            <div className="flex justify-between items-start mb-2">
-              <h3 className="text-lg font-semibold text-black">{summary.title}</h3>
-              <span className="text-xs text-gray-700 bg-gray-100 px-2 py-1 rounded">
-                {getFormatLabel(summary.format)}
-              </span>
+            <div
+              className="cursor-pointer"
+              onClick={() => setSelectedSummary(summary)}
+            >
+              <div className="flex justify-between items-start mb-2">
+                <h3 className="text-lg font-semibold text-black pr-8">{summary.title}</h3>
+                <span className="text-xs text-gray-700 bg-gray-100 px-2 py-1 rounded">
+                  {getFormatLabel(summary.format)}
+                </span>
+              </div>
+              <div className="text-sm text-gray-600 mb-2">
+                {formatDate(summary.created_at)}
+              </div>
+              <div className="text-sm text-gray-700 line-clamp-2">
+                {summary.summary_text.substring(0, 200)}...
+              </div>
+              <div className="flex gap-2 mt-3 text-xs text-gray-600">
+                <span className="bg-gray-100 px-2 py-1 rounded">
+                  {summary.language.toUpperCase()}
+                </span>
+                <span className="bg-gray-100 px-2 py-1 rounded">
+                  {summary.detail_level}
+                </span>
+                <span className="bg-gray-100 px-2 py-1 rounded">
+                  {summary.generation_time_seconds.toFixed(1)}s
+                </span>
+              </div>
             </div>
-            <div className="text-sm text-gray-600 mb-2">
-              {formatDate(summary.created_at)}
-            </div>
-            <div className="text-sm text-gray-700 line-clamp-2">
-              {summary.summary_text.substring(0, 200)}...
-            </div>
-            <div className="flex gap-2 mt-3 text-xs text-gray-600">
-              <span className="bg-gray-100 px-2 py-1 rounded">
-                {summary.language.toUpperCase()}
-              </span>
-              <span className="bg-gray-100 px-2 py-1 rounded">
-                {summary.detail_level}
-              </span>
-              <span className="bg-gray-100 px-2 py-1 rounded">
-                {summary.generation_time_seconds.toFixed(1)}s
-              </span>
-            </div>
+            {/* Delete button */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setDeleteConfirm(summary.id);
+              }}
+              className="absolute top-4 right-4 text-gray-400 hover:text-red-600 transition-colors"
+              title="Delete summary"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                />
+              </svg>
+            </button>
           </div>
         ))}
       </div>
@@ -282,6 +347,32 @@ export default function ResumesLibrary({ isProcessing = false, processingProgres
                 {message}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <h3 className="text-xl font-bold text-black mb-4">Delete Summary?</h3>
+            <p className="text-gray-700 mb-6">
+              Are you sure you want to delete this summary? This action cannot be undone.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                className="bg-gray-200 hover:bg-gray-300 text-black font-medium py-2 px-4 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDelete(deleteConfirm)}
+                className="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+              >
+                Delete
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -247,6 +247,33 @@ async def get_summary(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.delete("/summaries/{summary_id}")
+async def delete_summary(
+    summary_id: str,
+    user_id: str = Depends(get_current_user_id),
+):
+    """Delete a specific summary by ID."""
+    try:
+        # First verify the summary exists and belongs to the user
+        summary_res = supabase.table("summaries").select("id").eq("id", summary_id).eq("user_id", user_id).execute()
+
+        if not summary_res.data:
+            raise HTTPException(status_code=404, detail="Summary not found")
+
+        # Delete the summary
+        supabase.table("summaries").delete().eq("id", summary_id).eq("user_id", user_id).execute()
+
+        return JSONResponse({
+            "message": "Summary deleted successfully",
+            "summary_id": summary_id
+        })
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.get("/preferences")
 async def get_preferences(
     user_id: str = Depends(get_current_user_id),
