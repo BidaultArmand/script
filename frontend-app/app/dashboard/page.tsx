@@ -49,21 +49,21 @@ export default function DashboardPage() {
 
   if (!ready) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-white text-black">
-        <p className="text-gray-600 text-sm">Chargement…</p>
+      <main className="min-h-screen flex items-center justify-center bg-[#FFF8F0] text-black">
+        <p className="text-gray-600 text-sm font-serif">Loading...</p>
       </main>
     )
   }
 
   return (
-    <main className="min-h-screen bg-white text-black">
+    <main className="min-h-screen bg-[#FFF8F0] text-black">
       {/* Header */}
-      <header className="border-b border-gray-200 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+      <header className="border-b-4 border-black bg-white">
+        <div className="max-w-7xl mx-auto px-6 py-5 flex justify-between items-center">
           <div className="flex items-center gap-4">
             <button
               onClick={() => window.location.href = '/'}
-              className="flex items-center gap-2 text-gray-700 hover:text-black transition-colors"
+              className="flex items-center gap-2 text-black hover:text-gray-700 transition-colors"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -79,20 +79,32 @@ export default function DashboardPage() {
                   d="M10 19l-7-7m0 0l7-7m-7 7h18"
                 />
               </svg>
-              Back
+              <span className="font-semibold font-sans">Back</span>
             </button>
-            <h1 className="text-2xl font-bold">Meeting Notes</h1>
+            <div className="flex items-center gap-2">
+              <div className="relative w-8 h-8">
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-6 h-6 relative">
+                    <div className="absolute top-1/2 left-1/2 w-0.5 h-6 bg-black transform -translate-x-1/2 -translate-y-1/2 rotate-0" />
+                    <div className="absolute top-1/2 left-1/2 w-0.5 h-6 bg-black transform -translate-x-1/2 -translate-y-1/2 rotate-45" />
+                    <div className="absolute top-1/2 left-1/2 w-6 h-0.5 bg-black transform -translate-x-1/2 -translate-y-1/2" />
+                    <div className="absolute top-1/2 left-1/2 w-6 h-0.5 bg-black transform -translate-x-1/2 -translate-y-1/2 rotate-45" />
+                  </div>
+                </div>
+              </div>
+              <h1 className="text-2xl font-black font-sans">Dashboard</h1>
+            </div>
           </div>
           <div className="flex gap-3">
             <button
               onClick={() => setPreferencesOpen(true)}
-              className="px-4 py-2 text-sm bg-black text-white hover:bg-gray-800 rounded-lg transition-colors"
+              className="px-5 py-2.5 text-sm font-bold bg-white text-black border-3 border-black rounded-full hover:bg-[#FFE8A3] transition-all"
             >
-              Advanced Settings
+              Settings
             </button>
             <button
               onClick={handleLogout}
-              className="px-4 py-2 text-sm bg-black text-white hover:bg-gray-800 rounded-lg transition-colors"
+              className="px-5 py-2.5 text-sm font-bold bg-black text-white border-3 border-black rounded-full hover:scale-105 transition-all"
             >
               Logout
             </button>
@@ -103,10 +115,10 @@ export default function DashboardPage() {
       <div className="max-w-7xl mx-auto px-6 py-10">
         {/* Upload Section */}
         <section className="mb-12">
-          <h2 className="text-xl font-semibold mb-6">Upload Audio</h2>
+          <h2 className="text-2xl font-black mb-6 font-sans">Upload Audio</h2>
 
-          <div className="bg-gray-50 rounded-xl p-8 border border-gray-200 shadow-lg">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-20 items-start">
+          <div className="bg-white rounded-[3rem] p-8 border-4 border-black shadow-[8px_8px_0_rgba(0,0,0,1)]">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
               {/* Left: Audio Uploader */}
               <div className="lg:col-span-2">
                 <AudioUploader
@@ -123,9 +135,6 @@ export default function DashboardPage() {
             </div>
           </div>
         </section>
-
-        {/* Divider */}
-        <div className="border-t border-gray-200 my-12" />
 
         {/* Resumes Library Section */}
         <section>
