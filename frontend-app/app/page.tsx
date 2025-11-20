@@ -1,11 +1,12 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 
 export default function LandingPage() {
   const router = useRouter()
   const [audioFile, setAudioFile] = useState<File | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleTranscribe = () => {
     if (audioFile) {
@@ -15,13 +16,14 @@ export default function LandingPage() {
 
   const handleAudioUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (file && file.type.startsWith('audio/')) {
+    if (file) {
       setAudioFile(file)
-      console.log('✅ Audio file uploaded:', file.name, `(${(file.size / 1024 / 1024).toFixed(2)} MB)`)
-    } else if (file) {
-      alert('Please upload an audio file')
-      e.target.value = ''
+      console.log('✅ File uploaded:', file.name, file.type, `(${(file.size / 1024 / 1024).toFixed(2)} MB)`)
     }
+  }
+
+  const handleZoneClick = () => {
+    fileInputRef.current?.click()
   }
 
   return (
@@ -81,61 +83,69 @@ export default function LandingPage() {
 
           {/* Hero CTA - Upload Audio */}
           <div className="max-w-3xl mx-auto">
-            <div className="bg-white rounded-[3rem] p-8 md:p-10 border-4 border-black shadow-[8px_8px_0_rgba(0,0,0,1)]">
-              <label className="block mb-6">
+            <div className="bg-white rounded-[3rem] p-8 md:p-12 border-4 border-black shadow-[8px_8px_0_rgba(0,0,0,1)]">
+
+              {/* Upload Zone */}
+              <div className="mb-8">
                 <input
+                  ref={fileInputRef}
                   type="file"
                   accept="audio/*"
                   onChange={handleAudioUpload}
                   className="hidden"
-                  id="audio-upload"
                 />
                 <div
-                  className="w-full py-8 px-6 text-center text-lg font-bold border-3 border-black rounded-3xl cursor-pointer transition-all hover:scale-105 bg-[#FFF8F0] hover:bg-[#FFE8A3]"
-                  onClick={() => document.getElementById('audio-upload')?.click()}
+                  onClick={handleZoneClick}
+                  className="relative w-full py-12 px-8 border-4 border-dashed border-black rounded-3xl cursor-pointer transition-all hover:bg-[#FFE8A3] hover:border-solid bg-[#FFF8F0]"
                 >
                   {audioFile ? (
-                    <div className="flex flex-col items-center justify-center gap-3">
-                      <svg className="w-12 h-12 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
-                      </svg>
-                      <span className="text-xl">{audioFile.name}</span>
-                      <span className="text-sm text-gray-500">Click to change file</span>
+                    <div className="flex flex-col items-center justify-center gap-4">
+                      <div className="w-20 h-20 rounded-full bg-green-500 border-4 border-black flex items-center justify-center">
+                        <svg className="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-2xl font-black mb-2">{audioFile.name}</p>
+                        <p className="text-lg text-gray-600 mb-2">
+                          {(audioFile.size / 1024 / 1024).toFixed(2)} MB
+                        </p>
+                        <p className="text-sm text-gray-500">Click to change file</p>
+                      </div>
                     </div>
                   ) : (
-                    <div className="flex flex-col items-center justify-center gap-3">
-                      <svg className="w-16 h-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                      </svg>
-                      <span className="text-2xl">Upload Audio File</span>
-                      <span className="text-sm text-gray-500">Click to browse or drag & drop</span>
+                    <div className="flex flex-col items-center justify-center gap-4">
+                      <div className="w-20 h-20 rounded-full bg-black flex items-center justify-center">
+                        <svg className="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        </svg>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-2xl font-black mb-2">Upload Audio File</p>
+                        <p className="text-base text-gray-600">
+                          Click to browse or drag & drop
+                        </p>
+                        <p className="text-sm text-gray-500 mt-2">
+                          MP3, WAV, M4A, etc.
+                        </p>
+                      </div>
                     </div>
                   )}
                 </div>
-              </label>
+              </div>
 
-              {audioFile && (
-                <div className="animate-fadeIn">
-                  <div className="mb-4 p-4 bg-green-50 border-2 border-green-500 rounded-2xl">
-                    <p className="text-sm text-green-700 font-semibold text-center">
-                      ✓ File ready to transcribe: {audioFile.name}
-                    </p>
-                    <p className="text-xs text-green-600 text-center mt-1">
-                      Size: {(audioFile.size / 1024 / 1024).toFixed(2)} MB
-                    </p>
-                  </div>
-                  <button
-                    onClick={handleTranscribe}
-                    className="w-full py-5 text-xl font-black rounded-full text-white transition-all hover:scale-105 active:scale-95"
-                    style={{
-                      background: 'linear-gradient(135deg, #FF6B9D 0%, #FF8E6D 50%, #FFB84D 100%)',
-                      boxShadow: '0 6px 0 rgba(255, 107, 157, 0.4), 0 10px 20px rgba(255, 107, 157, 0.2)'
-                    }}
-                  >
-                    Transcrire & Sign Up →
-                  </button>
-                </div>
-              )}
+              {/* CTA Button */}
+              <button
+                onClick={audioFile ? handleTranscribe : undefined}
+                disabled={!audioFile}
+                className={`w-full py-5 text-xl font-black rounded-full transition-all border-4 border-black ${
+                  audioFile
+                    ? 'bg-black text-white hover:scale-105 active:scale-95 shadow-[6px_6px_0_rgba(0,0,0,1)] hover:shadow-[8px_8px_0_rgba(0,0,0,1)]'
+                    : 'bg-white text-black cursor-not-allowed opacity-50'
+                }`}
+              >
+                {audioFile ? 'Transcrire & Sign Up →' : 'Upload a file to continue'}
+              </button>
             </div>
           </div>
         </div>
