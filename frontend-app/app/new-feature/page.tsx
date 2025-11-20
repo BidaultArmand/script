@@ -38,9 +38,9 @@ export default function NewFeaturePage() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 text-black">
+    <main className="h-screen overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 text-black flex flex-col">
       {/* Header */}
-      <header className="border-b border-gray-200 bg-white/80 backdrop-blur-sm">
+      <header className="border-b border-gray-200 bg-white/80 backdrop-blur-sm flex-shrink-0">
         <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
           <button
             onClick={handleBackToHome}
@@ -73,7 +73,7 @@ export default function NewFeaturePage() {
       </header>
 
       {/* Main Content */}
-      <div className="flex min-h-[calc(100vh-73px)] items-center justify-center px-6">
+      <div className="flex flex-1 items-center justify-center px-6 overflow-y-auto">
         <div className="max-w-2xl text-center">
           <div className="mb-8">
             <svg
