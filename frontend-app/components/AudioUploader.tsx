@@ -2,6 +2,8 @@
 
 import { useCallback, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
+import { canGenerateSummary } from '@/lib/subscriptionHelpers'
+import PaymentModal from './PaymentModal'
 
 type TranscribeResponse = {
   meeting_id: string
@@ -22,6 +24,8 @@ export default function AudioUploader({ onProcessingStart, onProcessingProgress,
   const [uploading, setUploading] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [generatingSummary, setGeneratingSummary] = useState(false)
+  const [showPaymentModal, setShowPaymentModal] = useState(false)
+  const [summariesCount, setSummariesCount] = useState(0)
   const inputRef = useRef<HTMLInputElement | null>(null)
 
   const onSelectFile = (f: File) => {
@@ -63,6 +67,21 @@ export default function AudioUploader({ onProcessingStart, onProcessingProgress,
   const generateSummary = async (meetingId: string, token: string) => {
     try {
       setGeneratingSummary(true)
+      setMessage("Vérification de l'abonnement...")
+      onProcessingProgress?.(65) // 65% checking subscription
+
+      // Check if user can generate summary
+      const { canGenerate, summariesCount: count } = await canGenerateSummary(token)
+
+      if (!canGenerate) {
+        setSummariesCount(count)
+        setShowPaymentModal(true)
+        setMessage("Transcription terminée ✅ (Passez à Pro pour générer des résumés)")
+        setGeneratingSummary(false)
+        onProcessingComplete?.()
+        return
+      }
+
       setMessage("Génération du résumé...")
       onProcessingProgress?.(70) // 70% after transcription
 
@@ -196,10 +215,16 @@ export default function AudioUploader({ onProcessingStart, onProcessingProgress,
   }
 
   return (
-    <div className="space-y-4 flex flex-col h-full">
-      <div className="flex justify-between items-center mb-2">
-        <h3 className="text-lg font-semibold text-black">Audio Upload</h3>
-      </div>
+    <>
+      <PaymentModal
+        isOpen={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+        summariesCount={summariesCount}
+      />
+      <div className="space-y-4 flex flex-col h-full">
+        <div className="flex justify-between items-center mb-2">
+          <h3 className="text-lg font-semibold text-black">Audio Upload</h3>
+        </div>
 
       <div
         onDrop={onDrop}
@@ -266,6 +291,7 @@ export default function AudioUploader({ onProcessingStart, onProcessingProgress,
       <p className="text-xs text-gray-500">
         Formats acceptés : mp3, m4a, wav, etc. Taille max selon config serveur.
       </p>
-    </div>
+      </div>
+    </>
   )
 }
