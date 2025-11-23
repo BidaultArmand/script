@@ -58,33 +58,15 @@ export default function DashboardPage() {
   return (
     <main className="min-h-screen bg-[#FFF8F0] text-black">
       {/* Header */}
-      <header className="border-b-4 border-black bg-white">
-        <div className="max-w-7xl mx-auto px-6 py-5 flex justify-between items-center">
-          <div className="flex items-center gap-4">
+      <header className="py-2 px-4 border-b-4 border-black bg-white">
+        <div className="max-w-7xl mx-auto flex justify-between items-center">
+          <div className="flex items-center gap-3">
             <button
               onClick={() => window.location.href = '/'}
-              className="flex items-center gap-2 text-black hover:text-gray-700 transition-colors"
+              className="hover:opacity-80 transition-opacity"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M10 19l-7-7m0 0l7-7m-7 7h18"
-                />
-              </svg>
-              <span className="font-semibold font-sans">Back</span>
+              <img src="/logo.svg" alt="echoCap" className="h-20 w-auto" />
             </button>
-            <div className="flex items-center gap-2">
-              <img src="/logo.svg" alt="echoCap" className="h-16 w-auto" />
-              <h1 className="text-2xl font-black font-sans">Dashboard</h1>
-            </div>
           </div>
           <div className="flex gap-3">
             <button
