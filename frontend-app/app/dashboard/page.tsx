@@ -82,16 +82,7 @@ export default function DashboardPage() {
               <span className="font-semibold font-sans">Back</span>
             </button>
             <div className="flex items-center gap-2">
-              <div className="relative w-8 h-8">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-6 h-6 relative">
-                    <div className="absolute top-1/2 left-1/2 w-0.5 h-6 bg-black transform -translate-x-1/2 -translate-y-1/2 rotate-0" />
-                    <div className="absolute top-1/2 left-1/2 w-0.5 h-6 bg-black transform -translate-x-1/2 -translate-y-1/2 rotate-45" />
-                    <div className="absolute top-1/2 left-1/2 w-6 h-0.5 bg-black transform -translate-x-1/2 -translate-y-1/2" />
-                    <div className="absolute top-1/2 left-1/2 w-6 h-0.5 bg-black transform -translate-x-1/2 -translate-y-1/2 rotate-45" />
-                  </div>
-                </div>
-              </div>
+              <img src="/logo.svg" alt="echoCap" className="h-16 w-auto" />
               <h1 className="text-2xl font-black font-sans">Dashboard</h1>
             </div>
           </div>

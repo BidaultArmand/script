@@ -192,7 +192,7 @@ export default function ResumesLibrary({ isProcessing = false, processingProgres
             >
               <div className="flex justify-between items-start mb-2">
                 <h3 className="text-lg font-semibold text-black pr-8">{summary.title}</h3>
-                <span className="text-xs text-gray-700 bg-gray-100 px-2 py-1 rounded">
+                <span className="text-xs text-gray-700 bg-gray-100 px-2 py-1 rounded mr-6">
                   {getFormatLabel(summary.format)}
                 </span>
               </div>

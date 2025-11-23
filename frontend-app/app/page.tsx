@@ -32,21 +32,7 @@ export default function LandingPage() {
       <header className="relative z-20 py-6 px-8">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div className="flex items-center gap-3">
-            {/* Brand Icon - Stylized burst/asterisk */}
-            <div className="relative w-10 h-10">
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-8 h-8 relative">
-                  {/* Asterisk-like burst shape */}
-                  <div className="absolute top-1/2 left-1/2 w-1 h-8 bg-black transform -translate-x-1/2 -translate-y-1/2 rotate-0" />
-                  <div className="absolute top-1/2 left-1/2 w-1 h-8 bg-black transform -translate-x-1/2 -translate-y-1/2 rotate-45" />
-                  <div className="absolute top-1/2 left-1/2 w-8 h-1 bg-black transform -translate-x-1/2 -translate-y-1/2" />
-                  <div className="absolute top-1/2 left-1/2 w-8 h-1 bg-black transform -translate-x-1/2 -translate-y-1/2 rotate-45" />
-                </div>
-              </div>
-            </div>
-            <span className="text-2xl font-black font-sans">
-              NotesAI
-            </span>
+            <img src="/logo.svg" alt="echoCap" className="h-20 w-auto" />
           </div>
           <button
             onClick={() => router.push('/auth')}
@@ -231,7 +217,7 @@ export default function LandingPage() {
       <footer className="py-12 px-8 border-t-2 border-black/10">
         <div className="max-w-7xl mx-auto text-center">
           <p className="text-gray-600 font-serif">
-            © 2025 NotesAI. Made with care.
+            © 2025 echoCap. Made with care.
           </p>
         </div>
       </footer>
